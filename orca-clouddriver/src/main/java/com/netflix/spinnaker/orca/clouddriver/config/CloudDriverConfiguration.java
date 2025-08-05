@@ -28,6 +28,8 @@ import com.netflix.spinnaker.kork.retrofit.exceptions.SpinnakerRetrofitErrorHand
 import com.netflix.spinnaker.kork.web.selector.DefaultServiceSelector;
 import com.netflix.spinnaker.kork.web.selector.SelectableService;
 import com.netflix.spinnaker.kork.web.selector.ServiceSelector;
+import java.util.Map;
+import java.util.Set;
 import com.netflix.spinnaker.orca.api.operations.OperationsRunner;
 import com.netflix.spinnaker.orca.clouddriver.*;
 import com.netflix.spinnaker.orca.clouddriver.config.CloudDriverConfigurationProperties.BaseUrl;
@@ -62,6 +64,13 @@ import retrofit.converter.JacksonConverter;
 })
 @Slf4j
 public class CloudDriverConfiguration {
+
+  // Whitelist of allowed ServiceSelector classes to prevent arbitrary class loading
+  private static final Set<String> ALLOWED_SELECTOR_CLASSES = Set.of(
+      "com.netflix.spinnaker.kork.web.selector.DefaultServiceSelector",
+      "com.netflix.spinnaker.kork.web.selector.ByCloudProviderServiceSelector",
+      "com.netflix.spinnaker.orca.clouddriver.config.ByExecutionTypeServiceSelector"
+  );
 
   @ConditionalOnMissingBean(ObjectMapper.class)
   @Bean
@@ -178,17 +187,26 @@ public class CloudDriverConfiguration {
                     buildService(type, url.getBaseUrl()), url.getPriority(), url.getConfig());
 
             if (url.getConfig() != null && url.getConfig().get("selectorClass") != null) {
+              String selectorClassName = url.getConfig().get("selectorClass").toString();
+              
+              // Validate that the class is in the allowed whitelist
+              if (!ALLOWED_SELECTOR_CLASSES.contains(selectorClassName)) {
+                log.error(
+                    "Selector class {} is not in the allowed whitelist. Allowed classes: {}", 
+                    selectorClassName, ALLOWED_SELECTOR_CLASSES);
+                throw new SecurityException("Unauthorized selector class: " + selectorClassName);
+              }
+              
               try {
                 Class<ServiceSelector> selectorClass =
-                    (Class<ServiceSelector>)
-                        Class.forName(url.getConfig().get("selectorClass").toString());
+                    (Class<ServiceSelector>) Class.forName(selectorClassName);
                 selector =
                     (ServiceSelector)
                         selectorClass.getConstructors()[0].newInstance(
                             selector.getService(), selector.getPriority(), url.getConfig());
               } catch (Exception e) {
                 log.error(
-                    "Failed to create selector for class {}", url.getConfig().get("selectorClass"));
+                    "Failed to create selector for class {}", selectorClassName);
 
                 throw new RuntimeException(e);
               }
