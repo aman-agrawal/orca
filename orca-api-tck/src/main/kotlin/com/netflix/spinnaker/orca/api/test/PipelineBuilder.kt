@@ -25,7 +25,7 @@ import com.netflix.spinnaker.orca.pipeline.model.DefaultTrigger
 import com.netflix.spinnaker.orca.pipeline.model.PipelineExecutionImpl
 import com.netflix.spinnaker.orca.pipeline.model.StageExecutionImpl
 import com.netflix.spinnaker.orca.pipeline.model.TaskExecutionImpl
-import com.netflix.spinnaker.orca.pipeline.tasks.NoOpTask
+import com.netflix.spinnaker.orca.pipeline.tasks.NoOpsTask
 import java.lang.System.currentTimeMillis
 
 /**
@@ -49,7 +49,7 @@ fun stage(init: StageExecution.() -> Unit): StageExecution {
   stage.type = "test"
   stage.refId = "1"
   stage.execution.stages.add(stage)
-  stage.init()
+  stage.init();
   return stage
 }
 
@@ -61,6 +61,7 @@ fun stage(init: StageExecution.() -> Unit): StageExecution {
 fun PipelineExecution.stage(init: StageExecution.() -> Unit): StageExecution {
   val stage = StageExecutionImpl()
   stage.execution = this
+  stages.add(stage)
   stage.type = "test"
   stage.refId = "1"
   stages.add(stage)
