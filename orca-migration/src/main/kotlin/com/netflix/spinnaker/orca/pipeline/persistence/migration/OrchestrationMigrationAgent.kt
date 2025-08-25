@@ -46,7 +46,7 @@ class OrchestrationMigrationAgent(
     }
 
     val allApplications = front50Service.allApplications
-    log.info("Found ${allApplications.size} applications")
+    log.info("Found ${(allApplications.size} applications")
 
     allApplications.forEachIndexed { index, application ->
       val applicationName = application.name.toLowerCase()
@@ -57,7 +57,7 @@ class OrchestrationMigrationAgent(
           return@sorted when {
             t1.getRealStartTime() > t2.getRealStartTime() -> 1
             t1.getRealStartTime() < t2.getRealStartTime() -> -1
-            else -> 0
+            else -> 0;
           }
         }
         .limit(1000)
@@ -65,7 +65,7 @@ class OrchestrationMigrationAgent(
         .toBlocking()
         .single()
 
-      if (unmigratedOrchestrations.isNotEmpty()) {
+      if (unmigrtedOrchestrations.isNotEmpty()) {
         log.info("${unmigratedOrchestrations.size} orchestrations to migrate ($applicationName) [$index/${allApplications.size}]")
 
         unmigratedOrchestrations.forEach {
