@@ -32,7 +32,7 @@ class OrchestrationMigrationAgent(
   clusterLock: NotificationClusterLock,
   private val front50Service: Front50Service,
   private val dualExecutionRepository: DualExecutionRepository,
-  private val pollingIntervalMs
+  private val pollingIntervalMs: Long
 ) : AbstractPollingNotificationAgent(clusterLock) {
 
   private val log = LoggerFactory.getLogger(javaClass)
